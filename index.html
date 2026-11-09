@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bảng điểm — Tính GPA</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14213D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GPA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --ink:#14213D;
+    --ink-soft:#2C3958;
+    --paper:#FDFDF9;
+    --paper-line:#DDD8CE;
+    --gold:#B8912F;
+    --gold-soft:#F1E7C9;
+    --red:#A63D34;
+    --green:#3D6B4C;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 32px;
+    color:var(--ink);
+    font-family:var(--sans);
+    padding:0 0 60px 0;
+  }
+  header{
+    background:var(--ink);
+    color:var(--paper);
+    padding:calc(28px + env(safe-area-inset-top)) 24px 22px;
+    border-bottom:6px solid var(--gold);
+  }
+  header .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    margin-bottom:6px;
+  }
+  header h1{
+    font-family:var(--sans);
+    font-size:28px;
+    margin:0;
+    font-weight:800;
+    letter-spacing:-0.3px;
+  }
+  header p{
+    font-family:var(--sans);
+    font-size:13px;
+    color:#c9cede;
+    margin:8px 0 0;
+    max-width:640px;
+    line-height:1.5;
+  }
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:28px 20px 0;
+  }
+  .card{
+    background:var(--paper);
+    border:1px solid var(--paper-line);
+    border-radius:2px;
+    padding:20px 22px;
+    margin-bottom:22px;
+    box-shadow: 0 1px 0 rgba(20,33,61,0.04);
+  }
+  .card h2{
+    font-family:var(--sans);
+    font-size:17px;
+    font-weight:700;
+    margin:0 0 4px;
+    color:var(--ink);
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .card h2 .tag{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--gold);
+    border:1px solid var(--gold);
+    padding:2px 6px;
+    border-radius:2px;
+    letter-spacing:1px;
+  }
+  .card .sub{
+    font-size:12.5px;
+    color:#666;
+    margin:0 0 16px;
+  }
+
+  .config-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:flex-end;
+    background:#faf8f1;
+    border:1px dashed var(--paper-line);
+    padding:12px 14px;
+    margin-bottom:16px;
+    border-radius:2px;
+  }
+  .config-row .field{min-width:110px;}
+  .config-row label{
+    display:block;
+    font-family:var(--mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:#7a7566;
+    margin-bottom:4px;
+  }
+  .config-row input{
+    width:80px;
+    border:1px solid var(--paper-line);
+    padding:6px 7px;
+    font-family:var(--mono);
+    font-size:13px;
+    text-align:right;
+    border-radius:2px;
+  }
+  .config-note{font-size:11.5px; color:#888; margin-left:auto; align-self:center;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+  }
+  thead th{
+    text-align:left;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    color:#7a7566;
+    border-bottom:2px solid var(--ink);
+    padding:6px 8px;
+  }
+  tbody td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--paper-line);
+    vertical-align:middle;
+  }
+  tbody tr.subject-row:hover{background:#faf6ea;}
+  input[type=text], input[type=number]{
+    width:100%;
+    border:1px solid var(--paper-line);
+    background:#fff;
+    padding:6px 7px;
+    font-size:14px;
+    font-family:var(--sans);
+    border-radius:2px;
+  }
+  input[type=number]{font-family:var(--mono); text-align:right;}
+  input:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold);}
+  input:disabled{background:#f2f0ea; color:#aaa;}
+  .col-name{width:20%;}
+  .col-credit{width:7%;}
+  .col-score{width:14%;}
+  .col-result{width:12%; text-align:center;}
+  .col-expand{width:5%; text-align:center;}
+  .col-del{width:5%; text-align:center;}
+
+  .mode-toggle{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin-top:6px;
+    font-size:11px;
+    color:#7a7566;
+    font-family:var(--mono);
+  }
+  .mode-toggle input{width:auto;}
+
+  .weight-row{
+    display:flex;
+    align-items:center;
+    gap:3px;
+    margin-top:3px;
+  }
+  .weight-row input.weight-input{
+    font-size:11px;
+    padding:3px 4px;
+    text-align:right;
+  }
+  .weight-row .pct{font-family:var(--mono); font-size:10.5px; color:#999;}
+  .wsum-note{
+    font-family:var(--mono);
+    font-size:10px;
+    margin-top:3px;
+    color:#999;
+  }
+  .wsum-note.bad{color:var(--red); font-weight:bold;}
+  .dash-cell{color:#ccc; text-align:center; font-family:var(--mono); font-size:13px;}
+
+  .grade-pill{
+    display:inline-block;
+    font-family:var(--mono);
+    font-weight:bold;
+    padding:3px 9px;
+    border-radius:3px;
+    font-size:13px;
+  }
+  .g-A{background:#e4f0e6; color:var(--green);}
+  .g-B{background:#eef1e0; color:#5c6b2f;}
+  .g-C{background:var(--gold-soft); color:#8a6a10;}
+  .g-D{background:#f7e6d8; color:#a1602a;}
+  .g-F{background:#f6dfdc; color:var(--red);}
+
+  .diem10{font-family:var(--mono); font-size:12px; color:#888; display:block; margin-top:2px;}
+
+  .btn{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.5px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:9px 16px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .btn:hover{background:var(--ink-soft);}
+  .btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--ink);
+  }
+  .btn.secondary:hover{background:#eee;}
+  .btn.danger{
+    background:transparent;
+    border:1px solid var(--red);
+    color:var(--red);
+    font-size:12px;
+    padding:3px 8px;
+  }
+  .btn.danger:hover{background:#fbecea;}
+  .btn.expand{
+    background:transparent;
+    border:1px solid var(--paper-line);
+    color:var(--ink);
+    font-size:13px;
+    padding:3px 8px;
+  }
+  .btn.expand.active{background:var(--ink); color:var(--paper);}
+
+  .toolbar{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+
+  .summary-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap:16px;
+    margin-top:4px;
+  }
+  .stat{
+    border-left:3px solid var(--gold);
+    padding:4px 0 4px 12px;
+  }
+  .stat .label{
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#7a7566;
+  }
+  .stat .value{
+    font-family:var(--sans);
+    font-size:26px;
+    font-weight:800;
+    color:var(--ink);
+    line-height:1.2;
+  }
+  .stat .value small{font-family:var(--sans); font-size:13px; color:#888;}
+
+  .scale-table{font-size:12.5px;}
+  .scale-table th, .scale-table td{padding:4px 8px;}
+
+  .whatif-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:14px 20px;
+  }
+  .field label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:#7a7566;
+    margin-bottom:5px;
+  }
+  .field input, .field select{
+    width:100%;
+    border:1px solid var(--paper-line);
+    padding:8px 9px;
+    font-size:14px;
+    border-radius:2px;
+    font-family:var(--sans);
+  }
+  .whatif-result{
+    margin-top:16px;
+    padding:14px 16px;
+    border-radius:2px;
+    font-family:var(--mono);
+    font-size:14px;
+    border:1px dashed var(--paper-line);
+  }
+  .whatif-result.ok{border-color:var(--green); background:#f2f8f3;}
+  .whatif-result.bad{border-color:var(--red); background:#fcf1f0;}
+  .whatif-result .big{font-size:22px; font-weight:bold; display:block; margin:4px 0;}
+
+  .detail-row td{
+    background:#faf8f1;
+    border-bottom:2px solid var(--paper-line);
+    padding:14px 16px;
+  }
+  .detail-box{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px 20px;
+    align-items:flex-end;
+  }
+  .detail-box .field{min-width:170px; flex:1;}
+  .detail-box .field label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    color:#7a7566;
+    display:block;
+    margin-bottom:4px;
+  }
+  .detail-result{
+    width:100%;
+    margin-top:10px;
+    font-family:var(--mono);
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:2px;
+    border:1px dashed var(--paper-line);
+  }
+  .detail-result.ok{border-color:var(--green); background:#f2f8f3;}
+  .detail-result.bad{border-color:var(--red); background:#fcf1f0;}
+  .detail-result .big{font-size:19px; font-weight:bold;}
+
+  footer{
+    text-align:center;
+    font-size:11.5px;
+    color:#999;
+    margin-top:30px;
+    font-family:var(--mono);
+  }
+
+  @media(max-width:640px){
+    .whatif-grid{grid-template-columns:1fr;}
+    .config-note{margin-left:0;}
+    thead{display:none;}
+    tbody tr.subject-row{display:block; border-bottom:none; padding:10px 0 0;}
+    tbody tr.subject-row td{display:flex; justify-content:space-between; align-items:flex-start; border:none; padding:4px 0;}
+    tbody tr.subject-row td::before{content:attr(data-label); font-family:var(--mono); font-size:10px; color:#999; text-transform:uppercase; margin-right:10px; padding-top:6px;}
+    .col-name, .col-credit, .col-score, .col-result, .col-expand, .col-del{width:100%;}
+    tbody tr.detail-row{display:block; border-bottom:2px solid var(--ink); padding-bottom:8px;}
+    tbody tr.detail-row td{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Học chế tín chỉ — Thang điểm 10 → Điểm chữ → Hệ 4</div>
+  <h1>Bảng tính GPA</h1>
+  <p>Điểm học phần = Chuyên cần×%CC + Giữa kỳ×%GK + Cuối kỳ×%CK (tỉ lệ chỉnh được theo từng môn). Với môn đã có điểm tổng kết, có thể nhập thẳng thay vì tách 3 cột. Dữ liệu tự lưu trên trình duyệt của bạn (localStorage), không gửi đi đâu cả.</p>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Danh sách môn học <span class="tag">nhập điểm</span></h2>
+    <p class="sub">Điểm nhập theo thang 10. Điểm học phần được làm tròn 1 chữ số thập phân trước khi quy đổi điểm chữ. Tỉ lệ %CC/%GK/%CK chỉnh riêng theo từng môn — nếu tổng không phải 100%, hệ thống tự chuẩn hoá theo tổng thực tế và cảnh báo màu đỏ để bạn biết mà sửa lại cho đúng đề cương.</p>
+
+    <div class="config-row">
+      <div class="field">
+        <label>%CC mặc định</label>
+        <input type="number" id="defWcc" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>%GK mặc định</label>
+        <input type="number" id="defWgk" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>%CK mặc định</label>
+        <input type="number" id="defWck" min="0" max="100" step="1">
+      </div>
+      <div class="config-note">Áp dụng cho môn mới thêm vào. Môn đã có sẵn không bị đổi theo.</div>
+    </div>
+
+    <table id="subjectTable">
+      <thead>
+        <tr>
+          <th class="col-name">Tên môn học</th>
+          <th class="col-credit">Tín chỉ</th>
+          <th class="col-score">Chuyên cần</th>
+          <th class="col-score">Giữa kỳ</th>
+          <th class="col-score">Cuối kỳ</th>
+          <th class="col-result">Điểm học phần</th>
+          <th class="col-expand"></th>
+          <th class="col-del"></th>
+        </tr>
+      </thead>
+      <tbody id="subjectBody"></tbody>
+    </table>
+
+    <div class="toolbar">
+      <button class="btn" id="addRowBtn">+ Thêm môn</button>
+      <button class="btn secondary" id="exportBtn">⬇ Xuất file (.json)</button>
+      <button class="btn secondary" id="importBtn">⬆ Nhập file (.json)</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+      <button class="btn secondary" id="clearBtn">Xóa toàn bộ</button>
+    </div>
+    <p class="sub" id="storageWarning" style="margin-top:10px; color:var(--red); display:none;">
+      ⚠ Trình duyệt của bạn đang chặn lưu tạm (localStorage) cho file mở trực tiếp — dữ liệu sẽ mất khi đóng tab. Dùng nút "Xuất file" trước khi đóng, và "Nhập file" khi mở lại.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Tổng kết</h2>
+    <div class="summary-grid" id="summaryGrid">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Điểm cần đạt để đạt GPA mục tiêu <span class="tag">what-if — toàn khoá</span></h2>
+    <p class="sub">Tính điểm trung bình (hệ 4) cần đạt ở số tín chỉ sắp tới để GPA tích lũy cuối cùng chạm mục tiêu. Mặc định lấy tín chỉ và GPA hiện tại từ bảng trên — bạn có thể sửa tay nếu muốn tính riêng. (Muốn ước tính điểm cuối kỳ cho MỘT môn cụ thể, bấm nút ▾ ở dòng môn đó trong bảng trên.)</p>
+    <div class="whatif-grid">
+      <div class="field">
+        <label>Tín chỉ đã tích lũy</label>
+        <input type="number" id="wiCredits" step="0.5" min="0">
+      </div>
+      <div class="field">
+        <label>GPA hiện tại (hệ 4)</label>
+        <input type="number" id="wiGpa" step="0.01" min="0" max="4">
+      </div>
+      <div class="field">
+        <label>Số tín chỉ sắp học</label>
+        <input type="number" id="wiFutureCredits" step="0.5" min="0" value="15">
+      </div>
+      <div class="field">
+        <label>GPA mục tiêu (hệ 4)</label>
+        <input type="number" id="wiTarget" step="0.01" min="0" max="4" value="3.2">
+      </div>
+    </div>
+    <div class="whatif-result" id="wiResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>Bảng quy đổi cố định <span class="tag">tham chiếu</span></h2>
+    <p class="sub">Điểm hệ 4 dùng quy đổi phổ biến A+=4.0, A=3.7, B+=3.5, B=3.0, C+=2.5, C=2.0, D+=1.5, D=1.0, F=0 — trường bạn nếu quy định khác thì sửa trực tiếp trong mảng <code>GRADE_SCALE</code> ở phần script.</p>
+    <table class="scale-table">
+      <thead><tr><th>Thang 10</th><th>Điểm chữ</th><th>Hệ 4</th></tr></thead>
+      <tbody>
+        <tr><td>9.0 – 10</td><td><span class="grade-pill g-A">A+</span></td><td>4.0</td></tr>
+        <tr><td>8.5 – 8.9</td><td><span class="grade-pill g-A">A</span></td><td>3.7</td></tr>
+        <tr><td>8.0 – 8.4</td><td><span class="grade-pill g-B">B+</span></td><td>3.5</td></tr>
+        <tr><td>7.0 – 7.9</td><td><span class="grade-pill g-B">B</span></td><td>3.0</td></tr>
+        <tr><td>6.0 – 6.9</td><td><span class="grade-pill g-C">C+</span></td><td>2.5</td></tr>
+        <tr><td>5.5 – 5.9</td><td><span class="grade-pill g-C">C</span></td><td>2.0</td></tr>
+        <tr><td>5.0 – 5.4</td><td><span class="grade-pill g-D">D+</span></td><td>1.5</td></tr>
+        <tr><td>4.0 – 4.9</td><td><span class="grade-pill g-D">D</span></td><td>1.0</td></tr>
+        <tr><td>Dưới 4.0</td><td><span class="grade-pill g-F">F</span></td><td>0.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>gpa_calculator.html — chạy hoàn toàn offline, dữ liệu lưu localStorage trình duyệt</footer>
+</main>
+
+<script>
+// ===== Bảng quy đổi cố định (sửa tại đây nếu trường bạn quy định khác) =====
+const GRADE_SCALE = [
+  { min: 9.0, letter: 'A+', point4: 4.0, cls:'g-A' },
+  { min: 8.5, letter: 'A',  point4: 3.7, cls:'g-A' },
+  { min: 8.0, letter: 'B+', point4: 3.5, cls:'g-B' },
+  { min: 7.0, letter: 'B',  point4: 3.0, cls:'g-B' },
+  { min: 6.0, letter: 'C+', point4: 2.5, cls:'g-C' },
+  { min: 5.5, letter: 'C',  point4: 2.0, cls:'g-C' },
+  { min: 5.0, letter: 'D+', point4: 1.5, cls:'g-D' },
+  { min: 4.0, letter: 'D',  point4: 1.0, cls:'g-D' },
+  { min: -Infinity, letter: 'F', point4: 0.0, cls:'g-F' },
+];
+
+function classify(diem10){
+  for(const row of GRADE_SCALE){
+    if(diem10 >= row.min) return row;
+  }
+  return GRADE_SCALE[GRADE_SCALE.length-1];
+}
+
+const STORAGE_KEY = 'gpa_calc_subjects_v2';
+const CONFIG_KEY = 'gpa_calc_config_v1';
+const OLD_STORAGE_KEY = 'gpa_calc_subjects_v1';
+let subjects = [];
+let config = { defWcc:10, defWgk:30, defWck:60 };
+const expandedIdx = new Set();
+
+function loadConfig(){
+  try{
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if(raw) config = Object.assign(config, JSON.parse(raw));
+  }catch(e){ /* giữ mặc định */ }
+  document.getElementById('defWcc').value = config.defWcc;
+  document.getElementById('defWgk').value = config.defWgk;
+  document.getElementById('defWck').value = config.defWck;
+}
+function saveConfig(){
+  try{ localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); }
+  catch(e){ showStorageWarning(); }
+}
+
+function normalizeSubject(s){
+  return {
+    name: s.name ?? '',
+    credit: s.credit ?? 3,
+    mode: s.mode === 'direct' ? 'direct' : 'components',
+    cc: s.cc ?? '', gk: s.gk ?? '', ck: s.ck ?? '',
+    w_cc: (s.w_cc !== undefined && s.w_cc !== '') ? s.w_cc : config.defWcc,
+    w_gk: (s.w_gk !== undefined && s.w_gk !== '') ? s.w_gk : config.defWgk,
+    w_ck: (s.w_ck !== undefined && s.w_ck !== '') ? s.w_ck : config.defWck,
+    direct: s.direct ?? '',
+    targetSel: s.targetSel ?? '',
+    targetCustom: s.targetCustom ?? ''
+  };
+}
+
+function loadSubjects(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      subjects = JSON.parse(raw).map(normalizeSubject);
+      return;
+    }
+    // di chuyển dữ liệu cũ (v1, không có tỉ lệ/chế độ) nếu có
+    const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
+    if(oldRaw){
+      subjects = JSON.parse(oldRaw).map(normalizeSubject);
+      saveSubjects();
+      return;
+    }
+    subjects = defaultSubjects();
+  }catch(e){
+    subjects = defaultSubjects();
+    showStorageWarning();
+  }
+}
+function defaultSubjects(){
+  return [ normalizeSubject({ name:'', credit:3 }) ];
+}
+function saveSubjects(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+  }catch(e){
+    showStorageWarning();
+  }
+}
+function showStorageWarning(){
+  document.getElementById('storageWarning').style.display = 'block';
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(subjects, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `gpa_data_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!Array.isArray(parsed)) throw new Error('Sai định dạng');
+      subjects = parsed.map(normalizeSubject);
+      saveSubjects();
+      renderTable();
+      renderSummary();
+      syncWhatIfDefaults();
+    }catch(err){
+      alert('File không đúng định dạng dữ liệu GPA đã xuất trước đó.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importData(file);
+  e.target.value = '';
+});
+
+document.getElementById('defWcc').addEventListener('input', e=>{ config.defWcc = e.target.value; saveConfig(); });
+document.getElementById('defWgk').addEventListener('input', e=>{ config.defWgk = e.target.value; saveConfig(); });
+document.getElementById('defWck').addEventListener('input', e=>{ config.defWck = e.target.value; saveConfig(); });
+
+function weightSum(s){
+  return (parseFloat(s.w_cc)||0) + (parseFloat(s.w_gk)||0) + (parseFloat(s.w_ck)||0);
+}
+
+function computeDiem10(s){
+  if(s.mode === 'direct'){
+    const d = parseFloat(s.direct);
+    if(isNaN(d)) return null;
+    return Math.round(d*10)/10;
+  }
+  const cc = parseFloat(s.cc), gk = parseFloat(s.gk), ck = parseFloat(s.ck);
+  if(isNaN(cc) || isNaN(gk) || isNaN(ck)) return null;
+  const wsum = weightSum(s);
+  if(wsum <= 0) return null;
+  const wcc = parseFloat(s.w_cc)||0, wgk = parseFloat(s.w_gk)||0, wck = parseFloat(s.w_ck)||0;
+  // Chuẩn hoá theo tổng thực tế (wsum) chứ không mặc định là 100,
+  // để điểm vẫn tính được ngay cả khi bạn gõ tỉ lệ sai — nhưng cảnh báo đỏ vẫn hiển thị
+  // để bạn biết mà sửa lại cho khớp đề cương môn học.
+  const raw = (cc*wcc + gk*wgk + ck*wck) / wsum;
+  return Math.round(raw*10)/10;
+}
+
+function renderTable(){
+  const body = document.getElementById('subjectBody');
+  body.innerHTML = '';
+  subjects.forEach((s, idx) => {
+    body.appendChild(buildSubjectRow(s, idx));
+    body.appendChild(buildDetailRow(s, idx));
+  });
+
+  body.querySelectorAll('input, select').forEach(inp => {
+    if(inp.dataset.field){
+      inp.addEventListener('input', onFieldChange);
+      if(inp.type === 'checkbox') inp.addEventListener('change', onFieldChange);
+    }
+  });
+  body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+    btn.addEventListener('click', onDelete);
+  });
+  body.querySelectorAll('[data-action="expand"]').forEach(btn=>{
+    btn.addEventListener('click', onToggleExpand);
+  });
+  body.querySelectorAll('[data-target-field]').forEach(inp=>{
+    inp.addEventListener('input', onTargetFieldChange);
+    if(inp.tagName === 'SELECT') inp.addEventListener('change', onTargetFieldChange);
+  });
+}
+
+function buildSubjectRow(s, idx){
+  const tr = document.createElement('tr');
+  tr.className = 'subject-row';
+
+  const diem10 = computeDiem10(s);
+  const grade = diem10 !== null ? classify(diem10) : null;
+  const wsum = weightSum(s);
+  const wsumBad = Math.abs(wsum - 100) > 0.01;
+  const isDirect = s.mode === 'direct';
+
+  let ccCell, gkCell, ckCell;
+  if(isDirect){
+    ccCell = `<td class="col-score dash-cell" data-label="Chuyên cần">—</td>`;
+    gkCell = `<td class="col-score dash-cell" data-label="Giữa kỳ">—</td>`;
+    ckCell = `<td class="col-score" data-label="Điểm tổng kết">
+        <input type="number" min="0" max="10" step="0.1" value="${s.direct ?? ''}" placeholder="Đ.tổng kết" data-idx="${idx}" data-field="direct">
+      </td>`;
+  } else {
+    ccCell = `<td class="col-score" data-label="Chuyên cần">
+        <input type="number" min="0" max="10" step="0.1" value="${s.cc ?? ''}" data-idx="${idx}" data-field="cc">
+        <div class="weight-row"><input type="number" class="weight-input" min="0" max="100" step="1" value="${s.w_cc ?? ''}" data-idx="${idx}" data-field="w_cc"><span class="pct">%</span></div>
+      </td>`;
+    gkCell = `<td class="col-score" data-label="Giữa kỳ">
+        <input type="number" min="0" max="10" step="0.1" value="${s.gk ?? ''}" data-idx="${idx}" data-field="gk">
+        <div class="weight-row"><input type="number" class="weight-input" min="0" max="100" step="1" value="${s.w_gk ?? ''}" data-idx="${idx}" data-field="w_gk"><span class="pct">%</span></div>
+      </td>`;
+    ckCell = `<td class="col-score" data-label="Cuối kỳ">
+        <input type="number" min="0" max="10" step="0.1" value="${s.ck ?? ''}" data-idx="${idx}" data-field="ck">
+        <div class="weight-row"><input type="number" class="weight-input" min="0" max="100" step="1" value="${s.w_ck ?? ''}" data-idx="${idx}" data-field="w_ck"><span class="pct">%</span></div>
+        <div class="wsum-note ${wsumBad ? 'bad' : ''}">Tổng tỉ lệ: ${wsum.toFixed(0)}%${wsumBad ? ' (nên = 100%)' : ''}</div>
+      </td>`;
+  }
+
+  tr.innerHTML = `
+    <td class="col-name" data-label="Môn học">
+      <input type="text" value="${escapeHtml(s.name)}" placeholder="VD: Hệ điều hành" data-idx="${idx}" data-field="name">
+      <label class="mode-toggle"><input type="checkbox" data-idx="${idx}" data-field="mode" ${isDirect ? 'checked' : ''}> nhập thẳng điểm tổng kết</label>
+    </td>
+    <td class="col-credit" data-label="Tín chỉ"><input type="number" min="0" step="0.5" value="${s.credit ?? ''}" data-idx="${idx}" data-field="credit"></td>
+    ${ccCell}
+    ${gkCell}
+    ${ckCell}
+    <td class="col-result" data-label="Kết quả">
+      ${grade ? `<span class="grade-pill ${grade.cls}">${grade.letter}</span><span class="diem10">${diem10.toFixed(1)} · ${grade.point4.toFixed(1)}</span>` : '<span style="color:#bbb; font-size:12px;">chưa đủ điểm</span>'}
+    </td>
+    <td class="col-expand" data-label="">
+      <button class="btn expand ${expandedIdx.has(idx) ? 'active' : ''}" data-idx="${idx}" data-action="expand" ${isDirect ? 'disabled title="Chỉ áp dụng khi nhập theo 3 cột thành phần"' : ''}>▾</button>
+    </td>
+    <td class="col-del" data-label=""><button class="btn danger" data-idx="${idx}" data-action="del">✕</button></td>
+  `;
+  return tr;
+}
+
+function buildDetailRow(s, idx){
+  const tr = document.createElement('tr');
+  tr.className = 'detail-row';
+  tr.dataset.idx = idx;
+  tr.style.display = (expandedIdx.has(idx) && s.mode !== 'direct') ? '' : 'none';
+
+  const targetOptions = GRADE_SCALE
+    .filter(g => g.min > -Infinity)
+    .map(g => `<option value="${g.min}" ${String(s.targetSel) === String(g.min) ? 'selected' : ''}>Đạt ${g.letter} (≥ ${g.min.toFixed(1)})</option>`)
+    .join('');
+
+  const td = document.createElement('td');
+  td.colSpan = 8;
+  td.innerHTML = `
+    <div class="detail-box">
+      <div class="field">
+        <label>Mục tiêu điểm học phần môn này</label>
+        <select data-idx="${idx}" data-target-field="targetSel">
+          <option value="">-- Chọn mức điểm chữ --</option>
+          ${targetOptions}
+          <option value="custom" ${s.targetSel === 'custom' ? 'selected' : ''}>Tuỳ chỉnh (nhập tay)</option>
+        </select>
+      </div>
+      ${s.targetSel === 'custom' ? `
+      <div class="field">
+        <label>Điểm học phần mục tiêu (thang 10)</label>
+        <input type="number" min="0" max="10" step="0.1" value="${s.targetCustom ?? ''}" data-idx="${idx}" data-target-field="targetCustom">
+      </div>` : ''}
+    </div>
+    <div class="detail-result" id="detailResult-${idx}"></div>
+  `;
+  tr.appendChild(td);
+
+  // tính kết quả ngay sau khi dựng DOM
+  setTimeout(()=> renderDetailResult(idx), 0);
+  return tr;
+}
+
+function getTargetDiem10(s){
+  if(s.targetSel === 'custom') return parseFloat(s.targetCustom);
+  if(s.targetSel === '') return NaN;
+  return parseFloat(s.targetSel);
+}
+
+function renderDetailResult(idx){
+  const s = subjects[idx];
+  if(!s) return;
+  const el = document.getElementById(`detailResult-${idx}`);
+  if(!el) return;
+
+  const target = getTargetDiem10(s);
+  if(isNaN(target)){
+    el.className = 'detail-result';
+    el.innerHTML = 'Chọn mức điểm chữ muốn đạt (hoặc nhập tuỳ chỉnh) để tính điểm Cuối kỳ cần thiết.';
+    return;
+  }
+
+  const cc = parseFloat(s.cc), gk = parseFloat(s.gk);
+  const wcc = parseFloat(s.w_cc)||0, wgk = parseFloat(s.w_gk)||0, wck = parseFloat(s.w_ck)||0;
+  const wsum = wcc+wgk+wck;
+
+  if(isNaN(cc) || isNaN(gk)){
+    el.className = 'detail-result';
+    el.innerHTML = 'Cần nhập điểm Chuyên cần và Giữa kỳ ở dòng trên trước khi ước tính.';
+    return;
+  }
+  if(wck <= 0 || wsum <= 0){
+    el.className = 'detail-result bad';
+    el.innerHTML = 'Tỉ lệ %CK phải lớn hơn 0 thì mới còn gì để "cứu điểm" ở Cuối kỳ.';
+    return;
+  }
+
+  const needed = (target*wsum - cc*wcc - gk*wgk) / wck;
+
+  let cls = 'ok', html = '';
+  if(needed > 10){
+    cls = 'bad';
+    html = `Không thể đạt được với Cuối kỳ tối đa 10 điểm — cần <span class="big">${needed.toFixed(2)}</span>/10. Mục tiêu này đã ngoài tầm với dựa trên điểm Chuyên cần + Giữa kỳ hiện tại; cân nhắc hạ mục tiêu.`;
+  } else if(needed <= 0){
+    cls = 'ok';
+    html = `Đã chắc chắn đạt mục tiêu này dù Cuối kỳ được 0 điểm (điểm cần: ${needed.toFixed(2)}, tối thiểu thực tế là 0.0). Không có nghĩa là nên bỏ thi.`;
+  } else {
+    html = `Cần đạt Cuối kỳ khoảng <span class="big">${needed.toFixed(2)}</span>/10 (tỉ lệ ${wck}% Cuối kỳ) để điểm học phần đạt ≥ ${target.toFixed(1)}.`;
+  }
+  el.className = 'detail-result ' + cls;
+  el.innerHTML = html;
+}
+
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function onFieldChange(e){
+  const idx = +e.target.dataset.idx;
+  const field = e.target.dataset.field;
+  if(field === 'mode'){
+    subjects[idx].mode = e.target.checked ? 'direct' : 'components';
+  } else {
+    subjects[idx][field] = e.target.value;
+  }
+  saveSubjects();
+
+  if(field === 'mode' || field.startsWith('w_')){
+    // đổi chế độ hoặc tỉ lệ ảnh hưởng bố cục / cảnh báo tổng % -> vẽ lại cả dòng
+    renderTable();
+  } else {
+    updateRowResult(idx);
+    renderDetailResult(idx);
+  }
+  renderSummary();
+  syncWhatIfDefaults();
+}
+
+function onTargetFieldChange(e){
+  const idx = +e.target.dataset.idx;
+  const field = e.target.dataset.targetField;
+  subjects[idx][field] = e.target.value;
+  saveSubjects();
+  if(field === 'targetSel'){
+    renderTable(); // để hiện/ẩn ô nhập tuỳ chỉnh
+  } else {
+    renderDetailResult(idx);
+  }
+}
+
+function onToggleExpand(e){
+  const idx = +e.target.dataset.idx;
+  if(expandedIdx.has(idx)) expandedIdx.delete(idx);
+  else expandedIdx.add(idx);
+  renderTable();
+}
+
+function updateRowResult(idx){
+  const rows = document.querySelectorAll('#subjectBody tr.subject-row');
+  const row = rows[idx];
+  if(!row) return;
+  const resultCell = row.querySelector('.col-result');
+  const s = subjects[idx];
+  const diem10 = computeDiem10(s);
+  if(diem10 !== null){
+    const grade = classify(diem10);
+    resultCell.innerHTML = `<span class="grade-pill ${grade.cls}">${grade.letter}</span><span class="diem10">${diem10.toFixed(1)} · ${grade.point4.toFixed(1)}</span>`;
+  } else {
+    resultCell.innerHTML = '<span style="color:#bbb; font-size:12px;">chưa đủ điểm</span>';
+  }
+  // cập nhật cảnh báo tổng % (chỉ áp dụng chế độ 3 cột)
+  if(s.mode !== 'direct'){
+    const wsum = weightSum(s);
+    const wsumBad = Math.abs(wsum - 100) > 0.01;
+    const note = row.querySelector('.wsum-note');
+    if(note){
+      note.className = 'wsum-note ' + (wsumBad ? 'bad' : '');
+      note.textContent = `Tổng tỉ lệ: ${wsum.toFixed(0)}%${wsumBad ? ' (nên = 100%)' : ''}`;
+    }
+  }
+}
+
+function onDelete(e){
+  const idx = +e.target.dataset.idx;
+  subjects.splice(idx,1);
+  if(subjects.length === 0) subjects.push(normalizeSubject({name:'',credit:3}));
+  expandedIdx.clear();
+  saveSubjects();
+  renderTable();
+  renderSummary();
+  syncWhatIfDefaults();
+}
+
+document.getElementById('addRowBtn').addEventListener('click', ()=>{
+  subjects.push(normalizeSubject({ name:'', credit:3, w_cc: config.defWcc, w_gk: config.defWgk, w_ck: config.defWck }));
+  saveSubjects();
+  renderTable();
+});
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  if(!confirm('Xóa toàn bộ danh sách môn học?')) return;
+  subjects = defaultSubjects();
+  expandedIdx.clear();
+  saveSubjects();
+  renderTable();
+  renderSummary();
+  syncWhatIfDefaults();
+});
+
+function renderSummary(){
+  let totalCredits = 0, weighted4 = 0, weighted10 = 0, countedCredits = 0;
+  subjects.forEach(s=>{
+    const credit = parseFloat(s.credit);
+    const diem10 = computeDiem10(s);
+    if(!isNaN(credit)) totalCredits += credit;
+    if(diem10 !== null && !isNaN(credit)){
+      const grade = classify(diem10);
+      weighted4 += credit * grade.point4;
+      weighted10 += credit * diem10;
+      countedCredits += credit;
+    }
+  });
+
+  const gpa4 = countedCredits > 0 ? (weighted4/countedCredits) : 0;
+  const gpa10 = countedCredits > 0 ? (weighted10/countedCredits) : 0;
+
+  const grid = document.getElementById('summaryGrid');
+  grid.innerHTML = `
+    <div class="stat">
+      <div class="label">GPA (hệ 4)</div>
+      <div class="value">${countedCredits>0 ? gpa4.toFixed(2) : '—'}</div>
+    </div>
+    <div class="stat">
+      <div class="label">GPA (hệ 10)</div>
+      <div class="value">${countedCredits>0 ? gpa10.toFixed(2) : '—'}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Tín chỉ tích lũy</div>
+      <div class="value">${countedCredits.toFixed(1)} <small>/ ${totalCredits.toFixed(1)} nhập</small></div>
+    </div>
+    <div class="stat">
+      <div class="label">Số môn đã tính</div>
+      <div class="value">${subjects.filter(s=>computeDiem10(s)!==null).length} <small>/ ${subjects.length} môn</small></div>
+    </div>
+  `;
+
+  return { gpa4, countedCredits };
+}
+
+function syncWhatIfDefaults(){
+  const { gpa4, countedCredits } = renderSummary();
+  const creditsInput = document.getElementById('wiCredits');
+  const gpaInput = document.getElementById('wiGpa');
+  // only auto-fill if user hasn't manually diverged intentionally on load
+  if(!creditsInput.dataset.touched) creditsInput.value = countedCredits ? countedCredits.toFixed(1) : '';
+  if(!gpaInput.dataset.touched) gpaInput.value = countedCredits ? gpa4.toFixed(2) : '';
+  computeWhatIf();
+}
+
+['wiCredits','wiGpa'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', (e)=>{
+    e.target.dataset.touched = '1';
+  });
+});
+
+function computeWhatIf(){
+  const C1 = parseFloat(document.getElementById('wiCredits').value);
+  const G1 = parseFloat(document.getElementById('wiGpa').value);
+  const C2 = parseFloat(document.getElementById('wiFutureCredits').value);
+  const Gt = parseFloat(document.getElementById('wiTarget').value);
+
+  const resultEl = document.getElementById('wiResult');
+
+  if([C1,G1,C2,Gt].some(v => isNaN(v)) || C2 <= 0){
+    resultEl.className = 'whatif-result';
+    resultEl.innerHTML = 'Nhập đủ 4 giá trị để tính (số tín chỉ sắp học phải lớn hơn 0).';
+    return;
+  }
+
+  const required = (Gt*(C1+C2) - G1*C1) / C2;
+
+  let html = '';
+  let cls = 'ok';
+  if(required > 4.0){
+    cls = 'bad';
+    html = `Không khả thi trong <b>${C2}</b> tín chỉ sắp tới — cần điểm trung bình <span class="big">${required.toFixed(2)}</span> (hệ 4), vượt quá mức tối đa 4.0.
+    Bạn cần kéo dài thời gian (nhiều tín chỉ hơn) hoặc hạ mục tiêu GPA.`;
+  } else if(required <= 0){
+    cls = 'ok';
+    html = `Mục tiêu đã đạt hoặc thấp hơn GPA hiện tại — bạn không cần điểm dương ở ${C2} tín chỉ tới để giữ GPA ≥ ${Gt}. (Điểm trung bình cần: <span class="big">${required.toFixed(2)}</span>, thực tế tối thiểu là 0.0)`;
+  } else {
+    html = `Cần điểm trung bình (hệ 4) khoảng <span class="big">${required.toFixed(2)}</span> trên ${C2} tín chỉ sắp tới để đạt GPA ${Gt.toFixed(2)} sau khi tích lũy đủ ${(C1+C2).toFixed(1)} tín chỉ.`;
+    if(required > 3.5) html += ' Đây là mức khá cao (~A trở lên), nên cân nhắc độ khả thi theo năng lực hiện tại.';
+  }
+  resultEl.className = 'whatif-result ' + cls;
+  resultEl.innerHTML = html;
+}
+
+['wiCredits','wiGpa','wiFutureCredits','wiTarget'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', computeWhatIf);
+});
+
+// PWA: đăng ký service worker + xin quyền lưu trữ bền (giảm nguy cơ trình duyệt tự xoá localStorage)
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+if(navigator.storage && navigator.storage.persist){
+  navigator.storage.persist().catch(()=>{});
+}
+
+// init
+loadConfig();
+loadSubjects();
+renderTable();
+syncWhatIfDefaults();
+</script>
+
+</body>
+</html>
